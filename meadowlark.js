@@ -34,7 +34,7 @@ app.use(function(req, res, next) {
     if(!res.locals.partials) res.locals.partials = {};
     res.locals.partials.weather = getWeatherData();
     next();
-})
+});
 
 //Routes
 app.get('/', function(req, res) {
@@ -45,6 +45,19 @@ app.get('/about', function(req, res) {
     res.render('about', {
         fortune: fortune.getFortune(),
         pageTestScript: 'qa/tests-about.js'
+    });
+});
+
+app.get('/nursery-rhyme', function(req, res) {
+    res.render('nursery-rhyme');
+});
+
+app.get('/data/nursery-rhyme', function(req, res) {
+    res.json({
+        animal: 'squirrel',
+        bodyPart:   'tail',
+        adjective:  'bushy',
+        noun:   'heck'
     });
 });
 
