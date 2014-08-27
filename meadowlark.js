@@ -6,6 +6,8 @@ var handlebars = require('express3-handlebars');
 var fortune = require('./lib/fortune');
 var app = express();
 
+app.use(require('body-parser')()); //safe to use with Express 4.0
+
 //set-up the Handlebars view engine
 app.engine('handlebars', handlebars({
     defaultLayout: 'main',
@@ -54,10 +56,10 @@ app.get('/nursery-rhyme', function(req, res) {
 
 app.get('/data/nursery-rhyme', function(req, res) {
     res.json({
-        animal: 'squirrel',
+        animal:     'squirrel',
         bodyPart:   'tail',
         adjective:  'bushy',
-        noun:   'heck'
+        noun:       'heck'
     });
 });
 
@@ -67,6 +69,20 @@ app.get('/tours/hood-river', function(req, res) {
 
 app.get('/tours/request-group-rate', function(req, res) {
     res.render('tours/request-group-rate');
+});
+
+app.get('newsletter', function(req, res) {
+    //we will learn about csrf later
+    //need to just pass a dummy value at this point
+    res.render('newsleter', { csrf: 'dummyValue918273645' });
+});
+
+app.post('/process', function(req, res) {
+    console.log('Form (from querystring): ' + req.query.form);
+    console.log('CSRF token (from hidden form field: ' + req.query._csrf);
+    console.log('Name (from visible form field): ' + req.body.name);
+    console.log('Email (from visible form field): ' + req.body.email);
+    res.redirect(303, '/thank-you');
 });
 
 //custom 404 Page

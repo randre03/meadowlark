@@ -9,6 +9,7 @@
   "author": "Roger Randall",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.6.5",
     "express": "^4.8.5",
     "express3-handlebars": "^0.5.2"
   },
