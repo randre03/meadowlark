@@ -4,9 +4,17 @@
 var express = require('express');
 var handlebars = require('express3-handlebars');
 var fortune = require('./lib/fortune');
+var bodyParser = require('body-parser');
+var formidable = require('formidable');
+var jquload = require('jquery-file-upload-middleware');
+var credentials = require('./credentials')
+
 var app = express();
 
-app.use(require('body-parser')()); //safe to use with Express 4.0
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(require('cookie-parser')(credentials.cookieSecret));
+app.use(require('express-session')());
 
 //set-up the Handlebars view engine
 app.engine('handlebars', handlebars({
@@ -36,6 +44,19 @@ app.use(function(req, res, next) {
     if(!res.locals.partials) res.locals.partials = {};
     res.locals.partials.weather = getWeatherData();
     next();
+});
+
+//middleware for pretty-file-upload; //TODO implement the jQuery File Upload described in Chapter 8
+app.use('/upload', function(req, res, next) {
+    var now = Date.now();
+    jqupload.fileHandler({
+        uploadDir: function() {
+            return __dirname + '/public/uploads' + now;
+        },
+        uploadUrl: function() {
+            return '/uploads/' + now;
+        },
+    })(req, res, next);
 });
 
 //Routes
@@ -71,10 +92,29 @@ app.get('/tours/request-group-rate', function(req, res) {
     res.render('tours/request-group-rate');
 });
 
-app.get('newsletter', function(req, res) {
+app.get('/newsletter', function(req, res) {
     //we will learn about csrf later
     //need to just pass a dummy value at this point
-    res.render('newsleter', { csrf: 'dummyValue918273645' });
+    res.render('newsletter', { csrf: 'dummyValue918273645' });
+});
+
+app.get('/contest/vacation-photo', function(req, res) {
+    var now = new Date();
+    res.render('contest/vacation-photo', {
+        year: now.getFullYear(),month: now.getMonth()
+    });
+});
+
+app.post('/contest/vacation-photo/:year/:month', function(req, res) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function(err, fields, files) {
+        if(err) return res.redirect(303, '/error');
+        console.log('received fields');
+        console.log(fields);
+        console.log('received files');
+        console.log(files);
+        res.redirect(303, '/thank-you');
+    });
 });
 
 app.post('/process', function(req, res) {
@@ -82,7 +122,14 @@ app.post('/process', function(req, res) {
     console.log('CSRF token (from hidden form field: ' + req.query._csrf);
     console.log('Name (from visible form field): ' + req.body.name);
     console.log('Email (from visible form field): ' + req.body.email);
-    res.redirect(303, '/thank-you');
+
+    if(req.xhr || req.accepts('json,html')==='json') {
+        //if there was an error we would send { error: 'error description }
+        res.send({ success: true });
+    } else {
+        //if there was an error we would redirect to an error page
+        res.redirect(303, '/thank-you');
+    }
 });
 
 //custom 404 Page
